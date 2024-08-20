@@ -109,7 +109,7 @@ class BaseCache(ClockedObject):
 
     tags = Param.BaseTags(BaseSetAssoc(), "Tag store")
     replacement_policy = Param.BaseReplacementPolicy(
-        LRURP(), "Replacement policy"
+        SIEVERP(), "Replacement policy"
     )
     partitioning_manager = Param.PartitionManager(
         NULL, "Cache partitioning manager"
