@@ -138,3 +138,66 @@ class L2_LRU(L2Cache):
 
 class L3_LRU(L3Cache):
     replacement_policy = LRURP()
+
+
+"""
+Second Chance caches
+"""
+
+
+class L1I_SecondChance(L1ICache):
+    replacement_policy = SecondChanceRP()
+
+
+class L1D_SecondChance(L1DCache):
+    replacement_policy = SecondChanceRP()
+
+
+class L2_SecondChance(L2Cache):
+    replacement_policy = SecondChanceRP()
+
+
+class L3_SecondChance(L3Cache):
+    replacement_policy = SecondChanceRP()
+
+
+"""
+Tree PLRU caches
+"""
+
+
+class L1I_TreePLRU(L1ICache):
+    replacement_policy = TreePLRURP()
+
+
+class L1D_TreePLRU(L1DCache):
+    replacement_policy = TreePLRURP()
+
+
+class L2_TreePLRU(L2Cache):
+    replacement_policy = TreePLRURP()
+
+
+class L3_TreePLRU(L3Cache):
+    replacement_policy = TreePLRURP()
+
+
+"""
+Weighted LRU caches
+"""
+
+
+class L1I_WeightedLRU(L1ICache):
+    replacement_policy = WeightedLRURP()
+
+
+class L1D_WeightedLRU(L1DCache):
+    replacement_policy = WeightedLRURP()
+
+
+class L2_WeightedLRU(L2Cache):
+    replacement_policy = WeightedLRURP()
+
+
+class L3_WeightedLRU(L3Cache):
+    replacement_policy = WeightedLRURP()
