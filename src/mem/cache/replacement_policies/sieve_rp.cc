@@ -88,6 +88,9 @@ SIEVE::getVictim(const ReplacementCandidates &candidates) const {
       // We randomly found a suitable candidate:
       // In the unsafe set and unvisited
       searchingVictim = false;
+    } else if (!victimData->isSafe && victimData->visited) {
+      victimData->isSafe = true;
+      victimData->visited = false;
     }
     ++victimIndex;
   } while (searchingVictim && victimIndex < candidates.size());
