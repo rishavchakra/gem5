@@ -24,6 +24,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import math
 from m5.params import *
 from m5.proxy import *
 from m5.SimObject import SimObject
@@ -181,3 +182,10 @@ class SIEVERP(BaseReplacementPolicy):
     type = "SIEVERP"
     cxx_class = "gem5::replacement_policy::SIEVE"
     cxx_header = "mem/cache/replacement_policies/sieve_rp.hh"
+
+
+class TreeSIEVERP(BaseReplacementPolicy):
+    type = "TreeSIEVERP"
+    cxx_class = "gem5::replacement_policy::TreeSIEVE"
+    cxx_header = "mem/cache/replacement_policies/tree_sieve_rp.hh"
+    assoc = Param.Int(Parent.assoc, "Number of leaves in each tree")

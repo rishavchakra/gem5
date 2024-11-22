@@ -17,6 +17,7 @@ class BaseSystem:
         system.cpu = X86TimingSimpleCPU()
 
         system.membus = SystemXBar()
+        # system.l2bus = L2XBar()
 
         # DRAM controller
         system.mem_ctrl = MemCtrl()
@@ -27,6 +28,7 @@ class BaseSystem:
         # Creating and connecting caches is up to implementations
 
         system.cpu.createInterruptController()
+        # Only needed for X86
         system.cpu.interrupts[0].pio = system.membus.mem_side_ports
         system.cpu.interrupts[0].int_requestor = system.membus.cpu_side_ports
         system.cpu.interrupts[0].int_responder = system.membus.mem_side_ports
@@ -42,6 +44,7 @@ class BaseSystem:
         binary = os.path.join(
             self.path, "../../../", "tests/research/sieve/", exe
         )
+        print(binary)
         self.system.workload = SEWorkload.init_compatible(binary)
 
         process = Process()

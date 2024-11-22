@@ -153,6 +153,7 @@ class L1(Cache):
     latency = args.l1latency
     mshrs = 12
     tgts_per_mshr = 8
+    replacement_policy = SIEVERP()
 
 
 # ----------------------
@@ -165,6 +166,7 @@ class L2(Cache):
     mshrs = 92
     tgts_per_mshr = 16
     write_buffers = 8
+    replacement_policy = SIEVERP()
 
 
 # ----------------------
