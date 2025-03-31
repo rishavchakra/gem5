@@ -189,3 +189,19 @@ class TreeSIEVERP(BaseReplacementPolicy):
     cxx_class = "gem5::replacement_policy::TreeSIEVE"
     cxx_header = "mem/cache/replacement_policies/tree_sieve_rp.hh"
     assoc = Param.Int(Parent.assoc, "Number of leaves in each tree")
+
+
+class SplruRP(BaseReplacementPolicy):
+    type = "SplruRP"
+    cxx_class = "gem5::replacement_policy::Splru"
+    cxx_header = "mem/cache/replacement_policies/splru_rp.hh"
+    assoc = Param.Int(Parent.assoc, "Number of leaves in each tree")
+    cold_repl = Param.Int(
+        Parent.cold_repl, "Cold Queue replacement algorithm choice"
+    )
+    hot_repl = Param.Int(
+        Parent.hot_repl, "Hot Queue replacement algorithm choice"
+    )
+    probation_type = Param.Int(
+        Parent.probation_type, "Probation Queue use choice"
+    )
