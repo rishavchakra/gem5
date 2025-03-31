@@ -30,6 +30,7 @@ from m5.objects import (
     BasePrefetcher,
     Cache,
     StridePrefetcher,
+    TreePLRURP,
 )
 
 from .....utils.override import *
@@ -53,6 +54,7 @@ class L1DCache(Cache):
         mshrs: int = 16,
         tgts_per_mshr: int = 20,
         writeback_clean: bool = False,
+        replacement_policy=TreePLRURP(),
         PrefetcherCls: Type[BasePrefetcher] = StridePrefetcher,
     ):
         super().__init__()
@@ -65,3 +67,4 @@ class L1DCache(Cache):
         self.tgts_per_mshr = tgts_per_mshr
         self.writeback_clean = writeback_clean
         self.prefetcher = PrefetcherCls()
+        self.replacement_policy = replacement_policy

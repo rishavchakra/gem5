@@ -66,12 +66,14 @@ class PrivateL1CacheHierarchy(AbstractClassicCacheHierarchy):
         self,
         l1d_size: str,
         l1i_size: str,
+        assoc: int,
+        repl,
         membus: Optional[BaseXBar] = None,
     ) -> None:
         """
-        :param l1d_size: The size of the L1 Data Cache (e.g., "32kB").
+        :param l1d_size: The size of the L1 Data Cache (e.g., "32KiB").
 
-        :param  l1i_size: The size of the L1 Instruction Cache (e.g., "32kB").
+        :param  l1i_size: The size of the L1 Instruction Cache (e.g., "32KiB").
 
         :param membus: The memory bus. This parameter is optional parameter and
                        will default to a 64 bit width SystemXBar is not
@@ -82,6 +84,8 @@ class PrivateL1CacheHierarchy(AbstractClassicCacheHierarchy):
         self.membus = membus if membus else self._get_default_membus()
         self._l1d_size = l1d_size
         self._l1i_size = l1i_size
+        self._assoc = assoc
+        self._repl = repl
 
     @overrides(AbstractClassicCacheHierarchy)
     def get_mem_side_port(self) -> Port:
@@ -96,16 +100,24 @@ class PrivateL1CacheHierarchy(AbstractClassicCacheHierarchy):
         # Set up the system port for functional access from the simulator.
         board.connect_system_port(self.membus.cpu_side_ports)
 
-        for _, port in board.get_memory().get_mem_ports():
+        for _, port in board.get_mem_ports():
             self.membus.mem_side_ports = port
 
         self.l1icaches = [
-            L1ICache(size=self._l1i_size)
+            L1ICache(
+                size=self._l1i_size,
+                assoc=self._assoc,
+                replacement_policy=self._repl,
+            )
             for i in range(board.get_processor().get_num_cores())
         ]
 
         self.l1dcaches = [
-            L1DCache(size=self._l1d_size)
+            L1DCache(
+                size=self._l1d_size,
+                assoc=self._assoc,
+                replacement_policy=self._repl,
+            )
             for i in range(board.get_processor().get_num_cores())
         ]
         # ITLB Page walk caches
@@ -151,7 +163,7 @@ class PrivateL1CacheHierarchy(AbstractClassicCacheHierarchy):
             data_latency=50,
             response_latency=50,
             mshrs=20,
-            size="1kB",
+            size="1KiB",
             tgts_per_mshr=12,
             addr_ranges=board.mem_ranges,
         )
