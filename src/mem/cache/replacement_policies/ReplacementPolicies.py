@@ -184,11 +184,11 @@ class SIEVERP(BaseReplacementPolicy):
     cxx_header = "mem/cache/replacement_policies/sieve_rp.hh"
 
 
-class TreeSIEVERP(BaseReplacementPolicy):
-    type = "TreeSIEVERP"
-    cxx_class = "gem5::replacement_policy::TreeSIEVE"
-    cxx_header = "mem/cache/replacement_policies/tree_sieve_rp.hh"
-    assoc = Param.Int(Parent.assoc, "Number of leaves in each tree")
+# class TreeSIEVERP(BaseReplacementPolicy):
+#     type = "TreeSIEVERP"
+#     cxx_class = "gem5::replacement_policy::TreeSIEVE"
+#     cxx_header = "mem/cache/replacement_policies/tree_sieve_rp.hh"
+#     assoc = Param.Int(Parent.assoc, "Number of leaves in each tree")
 
 
 class SplruRP(BaseReplacementPolicy):

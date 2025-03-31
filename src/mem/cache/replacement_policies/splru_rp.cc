@@ -1,5 +1,5 @@
 #include "mem/cache/replacement_policies/splru_rp.hh"
-#include "base/logging.h"
+#include "base/logging.hh"
 #include "params/SplruRP.hh"
 
 namespace gem5 {
