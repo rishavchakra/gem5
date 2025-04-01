@@ -56,14 +56,15 @@ void Splru::invalidate(const std::shared_ptr<ReplacementData> &repl_data) {
     }
   } else if (this->cold_repl_type == 2) {
     // FIFO
-    std::stack<SplruNode *> rec_stack = {tree->cold};
+    std::stack<SplruNode *> rec_stack;
+    rec_stack.push(tree->cold);
     while (!rec_stack.empty()) {
       SplruNode *cur = rec_stack.top();
       rec_stack.pop();
       cur->direction = false;
       if (cur->left != nullptr && cur->right != nullptr) {
-        rec_stack.push_back(cur->left);
-        rec_stack.push_back(cur->right);
+        rec_stack.push(cur->left);
+        rec_stack.push(cur->right);
       }
     }
 
