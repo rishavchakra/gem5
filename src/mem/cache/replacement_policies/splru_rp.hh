@@ -75,6 +75,7 @@ private:
       first_left->right = nullptr;
       this->trash_node = first_left;
       this->assoc = assoc;
+      this->repl_data_arr = repl_data_arr;
     }
 
     ~SplruTree() {

@@ -29,13 +29,12 @@ void Splru::invalidate(const std::shared_ptr<ReplacementData> &repl_data) {
   size_t leaf_ind = splru_repl->leaf_ind;
 
   size_t cold_ind = leaf_ind;
-  size_t cold_assoc = this->tree->assoc / 4;
+  size_t cold_assoc = tree->assoc / 4;
   if (leaf_ind > cold_assoc) {
     // Find an element from the cold queue to swap in
     // based on read of the cold queue replacement policy
-    size_t cold_swap_ind =
-        this->tree->get_safe(this->tree->cold, this->cold_repl_type);
-    this->tree->swap_leaves(leaf_ind, cold_swap_ind);
+    size_t cold_swap_ind = tree->get_safe(tree->cold, this->cold_repl_type);
+    tree->swap_leaves(leaf_ind, cold_swap_ind);
     cold_ind = cold_swap_ind;
   }
 
@@ -45,7 +44,7 @@ void Splru::invalidate(const std::shared_ptr<ReplacementData> &repl_data) {
   // Invalidation logic: the opposite of touching
   if (this->cold_repl_type == 1) {
     // LRU
-    SplruNode *trace = this->leaf_nodes[ind];
+    SplruNode *trace = tree->leaf_nodes[cold_ind];
     while (trace->parent != NULL) {
       bool is_left_child = trace->parent->left == trace;
       if (is_left_child) {
@@ -57,9 +56,10 @@ void Splru::invalidate(const std::shared_ptr<ReplacementData> &repl_data) {
     }
   } else if (this->cold_repl_type == 2) {
     // FIFO
-    std::vector<SplruNode *> rec_stack = {this->tree->cold};
+    std::stack<SplruNode *> rec_stack = {tree->cold};
     while (!rec_stack.empty()) {
-      SplruNode *cur = rec_stack.pop_back();
+      SplruNode *cur = rec_stack.top();
+      rec_stack.pop();
       cur->direction = false;
       if (cur->left != nullptr && cur->right != nullptr) {
         rec_stack.push_back(cur->left);
@@ -67,7 +67,7 @@ void Splru::invalidate(const std::shared_ptr<ReplacementData> &repl_data) {
       }
     }
 
-    SplruNode *trace = this->leaf_nodes[ind];
+    SplruNode *trace = tree->leaf_nodes[cold_ind];
     while (trace->parent != NULL) {
       bool is_left_child = trace->parent->left == trace;
       if (is_left_child) {
@@ -85,23 +85,22 @@ void Splru::touch(const std::shared_ptr<ReplacementData> &repl_data) const {
       std::static_pointer_cast<SplruReplData>(repl_data);
   SplruTree *tree = this->tree;
   size_t leaf_ind = splru_repl->leaf_ind;
-  size_t cold_assoc = this->tree->assoc / 4;
+  size_t cold_assoc = tree->assoc / 4;
   size_t hot_ind = leaf_ind;
 
   // If touching something in the cold queue,
   // select something for eviction from the hot queue
   // and swap it into the cold queue
   if (leaf_ind < cold_assoc) {
-    size_t evict_ind =
-        this->tree->get_victim(this->tree->hot, this->hot_repl_type);
-    this->tree->swap_leaves(evict_ind, leaf_ind);
+    size_t evict_ind = tree->get_victim(tree->hot, this->hot_repl_type);
+    tree->swap_leaves(evict_ind, leaf_ind);
     hot_ind = evict_ind;
   }
 
   // Touch the element in the hot queue
   // If the obj was in the cold queue, it counts as first touch in hot queue
   bool is_first_placement = hot_ind != leaf_ind;
-  this->tree->touch(hot_ind, this->hot_repl_type, is_first_placement);
+  tree->touch(hot_ind, this->hot_repl_type, is_first_placement);
 }
 
 void Splru::reset(const std::shared_ptr<ReplacementData> &repl_data) const {
@@ -139,7 +138,7 @@ Splru::getVictim(const ReplacementCandidates &candidates) const {
     repl_type = this->hot_repl_type;
   }
 
-  size_t evict_ind = get_victim(trace_node, repl_type);
+  size_t evict_ind = this->tree->get_victim(trace_node, repl_type);
   return candidates.at(evict_ind);
 }
 
