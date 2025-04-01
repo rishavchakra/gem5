@@ -206,6 +206,7 @@ private:
   // 0: never place new elements in probation
   // 1: 50% place new items in probation
   // 2: 25% place new items in probation
+  // 2: 1/8 place new items in probation
   int probation_type;
 
 public:

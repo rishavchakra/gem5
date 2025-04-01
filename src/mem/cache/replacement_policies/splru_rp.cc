@@ -18,7 +18,7 @@ Splru::Splru(const Params &p)
            "Cold Queue replacement flag invalid");
   fatal_if(p.hot_repl < 0 || p.hot_repl > 2,
            "Hot Queue replacement flag invalid");
-  fatal_if(p.probation_type < 0 || p.probation_type > 2,
+  fatal_if(p.probation_type < 0 || p.probation_type > 3,
            "Probation choice flag invalid");
 }
 
@@ -126,6 +126,13 @@ Splru::getVictim(const ReplacementCandidates &candidates) const {
   } else if (probation_type == 2) {
     // Quarter random
     if (rand() % 4 == 0) {
+      trace_node = this->tree->cold;
+    } else {
+      trace_node = this->tree->probation;
+    }
+  } else if (probation_type == 3) {
+    // Eighth random
+    if (rand() % 8 == 0) {
       trace_node = this->tree->cold;
     } else {
       trace_node = this->tree->probation;
