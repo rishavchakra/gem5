@@ -30,18 +30,18 @@ from m5.objects import (
     BasePrefetcher,
     Cache,
     StridePrefetcher,
-    TreePLRURP,
+    TreePLRURP
 )
 
 from .....utils.override import *
 
 
-class L1DCache(Cache):
+class L1ICache(Cache):
     """
-    A simple L1 data cache with default values.
+    A simple L1 instruction cache with default values.
 
-    If the cache has a mostly exclusive downstream cache, ``writeback_clean``
-    should be set to ``True``.
+    If the cache does not have a downstream cache or the downstream cache
+    is mostly inclusive as usual, ``writeback_clean`` should be set to ``False``.
     """
 
     def __init__(
@@ -53,7 +53,7 @@ class L1DCache(Cache):
         response_latency: int = 1,
         mshrs: int = 16,
         tgts_per_mshr: int = 20,
-        writeback_clean: bool = False,
+        writeback_clean: bool = True,
         replacement_policy = TreePLRURP(),
         PrefetcherCls: Type[BasePrefetcher] = StridePrefetcher,
     ):
@@ -67,4 +67,3 @@ class L1DCache(Cache):
         self.tgts_per_mshr = tgts_per_mshr
         self.writeback_clean = writeback_clean
         self.prefetcher = PrefetcherCls()
-        self.replacement_policy = replacement_policy
