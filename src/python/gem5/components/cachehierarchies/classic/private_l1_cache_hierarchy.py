@@ -33,7 +33,7 @@ from m5.objects import (
     TreePLRURP,
 )
 
-from .....utils.override import *
+from ....utils.override import *
 
 
 class L1ICache(Cache):
