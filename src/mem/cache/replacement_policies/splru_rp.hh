@@ -46,7 +46,6 @@ private:
 protected:
   struct SplruReplData : ReplacementData {
     size_t leaf_ind;
-    bool valid;
 
     SplruReplData(size_t ind);
   };
@@ -84,6 +83,107 @@ private:
       delete hot;
       delete cold;
       delete trash_node;
+    }
+
+    void swap_leaves(size_t ind1, size_t ind2) {
+      SplruNode temp_node = *this->leaf_nodes[ind1];
+      *this->leaf_nodes[ind1] = *this->leaf_nodes[ind2];
+      *this->leaf_nodes[ind2] = temp_node;
+      SplruReplData temp_repl = *this->repl_data_arr[ind1];
+      *this->repl_data_arr[ind1] = *this->repl_data_arr[ind2];
+      *this->repl_data_arr[ind2] = temp_repl;
+    }
+
+    // Get the index of the cold queue element closest to eviction
+    size_t get_victim(SplruNode *root, int repl_type) {
+      if (repl_type == 1 || repl_type == 2) {
+        // LRU and FIFO selection
+        SplruNode *trace_node = root;
+        size_t evict_ind = 0;
+        while (trace_node->left != nullptr && trace_node->right != nullptr) {
+          if (trace_node->direction) {
+            trace_node = trace_node->right;
+            evict_ind = evict_ind * 2 + 1;
+          } else {
+            trace_node = trace_node->right;
+            evict_ind = evict_ind * 2;
+          }
+        }
+        return evict_ind;
+      } else {
+        // Random selection
+        // Range of random values depends on the root node used
+        if (root == this->cold) {
+          return rand() % (this->assoc / 4);
+        } else if (root == this->hot) {
+          size_t hot_assoc = this->assoc - (this->assoc / 4);
+          return (rand() % hot_assoc) + (this->assoc / 4);
+        } else if (root == this->probation) {
+          return (rand() % (this->assoc / 4)) + (this->assoc / 4);
+        } else {
+          // What did you pass in??
+          return rand() % this->assoc;
+        }
+      }
+    }
+
+    // Get the index of the hot queue element furthest from eviction
+    size_t get_safe(SplruNode *root, int repl_type) {
+      if (repl_type == 1 || repl_type == 2) {
+        // LRU and FIFO selection
+        SplruNode *trace_node = root;
+        size_t evict_ind = 0;
+        while (trace_node->left != nullptr && trace_node->right != nullptr) {
+          if (trace_node->direction) {
+            trace_node = trace_node->right;
+            evict_ind = evict_ind * 2 + 1;
+          } else {
+            trace_node = trace_node->right;
+            evict_ind = evict_ind * 2;
+          }
+        }
+        return evict_ind + (this->assoc / 4);
+      } else {
+        // Random selection
+        return (rand() % (this->assoc / 4)) + (this->assoc / 4);
+      }
+    }
+
+    // Touch an element within its queue. Does not alter the other queue
+    // is_first_placement: differentiating between placement and promotion
+    // touching
+    void touch(size_t ind, int repl_type, bool is_first_placement) {
+      // Random (0) has no touching logic
+      if (repl_type == 1) {
+        // LRU
+        SplruNode *trace = this->leaf_nodes[ind];
+        while (trace->parent != NULL) {
+          bool is_left_child = trace->parent->left == trace;
+          if (is_left_child) {
+            trace->parent->direction = true;
+          } else {
+            trace->parent->direction = false;
+          }
+          trace = trace->parent;
+        }
+      } else if (repl_type == 2) {
+        // FIFO
+        if (!is_first_placement) {
+          // Only alters the metadata on the first placement
+          return;
+        }
+        SplruNode *trace = this->leaf_nodes[ind];
+        while (trace->parent != NULL) {
+          bool is_left_child = trace->parent->left == trace;
+          if (is_left_child) {
+            trace->parent->direction = true;
+            break;
+          } else {
+            trace->parent->direction = false;
+          }
+          trace = trace->parent;
+        }
+      }
     }
   };
 
