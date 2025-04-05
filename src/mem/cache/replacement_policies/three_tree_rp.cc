@@ -161,7 +161,7 @@ ThreeTree::getVictim(const ReplacementCandidates &candidates) const {
     trace_node = trace_node->parent;
   }
 
-  return this->tree->repl_data_arr[evict_ind];
+  return candidates.at(this->tree->repl_data_arr[evict_ind]->leaf_ind);
 }
 
 std::shared_ptr<ReplacementData> ThreeTree::instantiateEntry() {
