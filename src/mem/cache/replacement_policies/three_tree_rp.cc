@@ -1,18 +1,18 @@
-#include "mem/cache/replacement_policies/splru_rp.hh"
+#include "mem/cache/replacement_policies/three_tree_rp.hh"
 #include "base/logging.hh"
-#include "params/SplruRP.hh"
+#include "params/ThreeTreeRP.hh"
 
 namespace gem5 {
 
 namespace replacement_policy {
 
-Splru::SplruReplData::SplruReplData(size_t ind) : leaf_ind(ind) {}
+ThreeTree::ThreeTreeReplData::ThreeTreeReplData(size_t ind) : leaf_ind(ind) {}
 
-Splru::Splru(const Params &p)
+ThreeTree::ThreeTree(const Params &p)
     : Base(p), cold_repl_type(p.cold_repl), hot_repl_type(p.hot_repl),
       probation_type(p.probation_type) {
   fatal_if(p.assoc < 4, "Associativity (assoc) cannot be less than 4");
-  tree = new SplruTree(p.assoc);
+  tree = new ThreeTreeTree(p.assoc);
   count = 0;
   fatal_if(p.cold_repl < 0 || p.cold_repl > 2,
            "Cold Queue replacement flag invalid");
@@ -22,11 +22,11 @@ Splru::Splru(const Params &p)
            "Probation choice flag invalid");
 }
 
-void Splru::invalidate(const std::shared_ptr<ReplacementData> &repl_data) {
-  std::shared_ptr<SplruReplData> splru_repl =
-      std::static_pointer_cast<SplruReplData>(repl_data);
-  SplruTree *tree = this->tree;
-  size_t leaf_ind = splru_repl->leaf_ind;
+void ThreeTree::invalidate(const std::shared_ptr<ReplacementData> &repl_data) {
+  std::shared_ptr<ThreeTreeReplData> three_tree_repl =
+      std::static_pointer_cast<ThreeTreeReplData>(repl_data);
+  ThreeTreeTree *tree = this->tree;
+  size_t leaf_ind = three_tree_repl->leaf_ind;
 
   size_t cold_ind = leaf_ind;
   size_t cold_assoc = tree->assoc / 4;
@@ -44,7 +44,7 @@ void Splru::invalidate(const std::shared_ptr<ReplacementData> &repl_data) {
   // Invalidation logic: the opposite of touching
   if (this->cold_repl_type == 1) {
     // LRU
-    SplruNode *trace = tree->leaf_nodes[cold_ind];
+    ThreeTreeNode *trace = tree->leaf_nodes[cold_ind];
     while (trace->parent != NULL) {
       bool is_left_child = trace->parent->left == trace;
       if (is_left_child) {
@@ -56,10 +56,10 @@ void Splru::invalidate(const std::shared_ptr<ReplacementData> &repl_data) {
     }
   } else if (this->cold_repl_type == 2) {
     // FIFO
-    std::stack<SplruNode *> rec_stack;
+    std::stack<ThreeTreeNode *> rec_stack;
     rec_stack.push(tree->cold);
     while (!rec_stack.empty()) {
-      SplruNode *cur = rec_stack.top();
+      ThreeTreeNode *cur = rec_stack.top();
       rec_stack.pop();
       cur->direction = false;
       if (cur->left != nullptr && cur->right != nullptr) {
@@ -68,7 +68,7 @@ void Splru::invalidate(const std::shared_ptr<ReplacementData> &repl_data) {
       }
     }
 
-    SplruNode *trace = tree->leaf_nodes[cold_ind];
+    ThreeTreeNode *trace = tree->leaf_nodes[cold_ind];
     while (trace->parent != NULL) {
       bool is_left_child = trace->parent->left == trace;
       if (is_left_child) {
@@ -81,11 +81,11 @@ void Splru::invalidate(const std::shared_ptr<ReplacementData> &repl_data) {
   }
 }
 
-void Splru::touch(const std::shared_ptr<ReplacementData> &repl_data) const {
-  std::shared_ptr<SplruReplData> splru_repl =
-      std::static_pointer_cast<SplruReplData>(repl_data);
-  SplruTree *tree = this->tree;
-  size_t leaf_ind = splru_repl->leaf_ind;
+void ThreeTree::touch(const std::shared_ptr<ReplacementData> &repl_data) const {
+  std::shared_ptr<ThreeTreeReplData> three_tree_repl =
+      std::static_pointer_cast<ThreeTreeReplData>(repl_data);
+  ThreeTreeTree *tree = this->tree;
+  size_t leaf_ind = three_tree_repl->leaf_ind;
   size_t cold_assoc = tree->assoc / 4;
   size_t hot_ind = leaf_ind;
 
@@ -104,15 +104,15 @@ void Splru::touch(const std::shared_ptr<ReplacementData> &repl_data) const {
   tree->touch(hot_ind, this->hot_repl_type, is_first_placement);
 }
 
-void Splru::reset(const std::shared_ptr<ReplacementData> &repl_data) const {
+void ThreeTree::reset(const std::shared_ptr<ReplacementData> &repl_data) const {
   touch(repl_data);
 }
 
 ReplaceableEntry *
-Splru::getVictim(const ReplacementCandidates &candidates) const {
+ThreeTree::getVictim(const ReplacementCandidates &candidates) const {
   // Should seek from the cold queue
   // or, if the probation flag allows it, occasionally from the probation area
-  SplruNode *trace_node;
+  ThreeTreeNode *trace_node;
   if (probation_type == 0) {
     // Never
     trace_node = this->tree->cold;
@@ -147,14 +147,27 @@ Splru::getVictim(const ReplacementCandidates &candidates) const {
   }
 
   size_t evict_ind = this->tree->get_victim(trace_node, repl_type);
-  return candidates.at(evict_ind);
+
+  // New element should be in MRU position
+  ThreeTreeNode *trace_node = this->tree->leaf_nodes[evict_ind];
+  while (trace_node->parent != nullptr && trace_node->parent != this->tree->hot) {
+    bool is_left_child = trace_node->parent->left == trace_node;
+    if (is_left_child) {
+      trace_node->parent->direction = true;
+    } else {
+      trace_node->parent->direction = false;
+    }
+    trace_node = trace_node->parent;
+  }
+
+  return this->repl_data_arr[evict_ind];
 }
 
-std::shared_ptr<ReplacementData> Splru::instantiateEntry() {
+std::shared_ptr<ReplacementData> ThreeTree::instantiateEntry() {
   fatal_if(this->count >= this->tree->assoc,
            "How did count get bigger than assoc?");
 
-  SplruReplData *repl = new SplruReplData(count);
+  ThreeTreeReplData *repl = new ThreeTreeReplData(count);
   this->tree->repl_data_arr[count] = repl;
   this->count++;
   return std::shared_ptr<ReplacementData>(repl);

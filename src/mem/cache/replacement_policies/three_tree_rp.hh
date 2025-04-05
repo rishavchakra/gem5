@@ -1,33 +1,34 @@
-#ifndef __MEM_CACHE_REPLACEMENT_POLICIES_SPLRU_RP_HH__
-#define __MEM_CACHE_REPLACEMENT_POLICIES_SPLRU_RP_HH__
+#ifndef __MEM_CACHE_REPLACEMENT_POLICIES_3TREE_RP_HH__
+#define __MEM_CACHE_REPLACEMENT_POLICIES_3TREE_RP_HH__
 
 #include "mem/cache/replacement_policies/base.hh"
 
 #include <cmath>
 #include <vector>
 
-#include "params/SplruRP.hh"
+#include "params/ThreeTreeRP.hh"
 
 namespace gem5 {
 
-struct SplruRPParams;
+struct ThreeTreeRPParams;
 
 namespace replacement_policy {
 
-class Splru : public Base {
+class ThreeTree : public Base {
 private:
-  struct SplruNode {
-    SplruNode *left;
-    SplruNode *right;
-    SplruNode *parent;
+  struct ThreeTreeNode {
+    ThreeTreeNode *left;
+    ThreeTreeNode *right;
+    ThreeTreeNode *parent;
     bool direction;
 
-    SplruNode(SplruNode *parent, int depth, int ind, SplruNode **leaf_arr)
+    ThreeTreeNode(ThreeTreeNode *parent, int depth, int ind,
+                  ThreeTreeNode **leaf_arr)
         : direction(false), parent(parent) {
       // Double check this indexing
       if (depth >= 0) {
-        this->left = new SplruNode(this, depth - 1, ind * 2, leaf_arr);
-        this->right = new SplruNode(this, depth - 1, ind * 2 + 1, leaf_arr);
+        this->left = new ThreeTreeNode(this, depth - 1, ind * 2, leaf_arr);
+        this->right = new ThreeTreeNode(this, depth - 1, ind * 2 + 1, leaf_arr);
       } else {
         this->left = nullptr;
         this->right = nullptr;
@@ -35,7 +36,7 @@ private:
       }
     }
 
-    ~SplruNode() {
+    ~ThreeTreeNode() {
       if (this->left != nullptr && this->right != nullptr) {
         delete left;
         delete right;
@@ -44,33 +45,36 @@ private:
   };
 
 protected:
-  struct SplruReplData : ReplacementData {
+  struct ThreeTreeReplData : ReplacementData {
     size_t leaf_ind;
 
-    SplruReplData(size_t ind);
+    ThreeTreeReplData(size_t ind);
   };
 
 private:
-  struct SplruTree {
-    SplruNode *cold;
-    SplruNode *hot;
-    SplruNode *probation;
-    SplruNode **leaf_nodes;
-    SplruReplData **repl_data_arr;
-    SplruNode *trash_node;
+  struct ThreeTreeTree {
+    ThreeTreeNode *cold;
+    ThreeTreeNode *hot;
+    ThreeTreeNode *probation;
+    ThreeTreeNode **leaf_nodes;
+    ThreeTreeReplData **repl_data_arr;
+    ThreeTreeNode *trash_node;
     size_t assoc;
 
-    SplruTree(int assoc) {
+    ThreeTreeTree(int assoc) {
       int tree_depth = int(log(tree_depth));
-      SplruNode **leaf_nodes = new SplruNode *[assoc];
-      SplruReplData **repl_data_arr = new SplruReplData *[assoc];
-      SplruNode *tree = new SplruNode(nullptr, tree_depth, 0, leaf_nodes);
-      SplruNode *first_left = tree->left;
+      ThreeTreeNode **leaf_nodes = new ThreeTreeNode *[assoc];
+      ThreeTreeReplData **repl_data_arr = new ThreeTreeReplData *[assoc];
+      ThreeTreeNode *tree =
+          new ThreeTreeNode(nullptr, tree_depth, 0, leaf_nodes);
+      ThreeTreeNode *first_left = tree->left;
       tree->left = first_left->right;
       this->probation = first_left->right;
       this->hot = tree;
       this->cold = first_left->left;
       this->cold->parent = nullptr;
+      this->probation->parent = this->hot;
+      this->leaf_nodes = leaf_nodes;
       first_left->left = nullptr;
       first_left->right = nullptr;
       this->trash_node = first_left;
@@ -78,7 +82,7 @@ private:
       this->repl_data_arr = repl_data_arr;
     }
 
-    ~SplruTree() {
+    ~ThreeTreeTree() {
       delete leaf_nodes;
       delete repl_data_arr;
       delete hot;
@@ -87,19 +91,19 @@ private:
     }
 
     void swap_leaves(size_t ind1, size_t ind2) {
-      SplruNode temp_node = *this->leaf_nodes[ind1];
-      *this->leaf_nodes[ind1] = *this->leaf_nodes[ind2];
-      *this->leaf_nodes[ind2] = temp_node;
-      SplruReplData temp_repl = *this->repl_data_arr[ind1];
+      // ThreeTreeNode temp_node = *this->leaf_nodes[ind1];
+      // *this->leaf_nodes[ind1] = *this->leaf_nodes[ind2];
+      // *this->leaf_nodes[ind2] = temp_node;
+      ThreeTreeReplData temp_repl = *this->repl_data_arr[ind1];
       *this->repl_data_arr[ind1] = *this->repl_data_arr[ind2];
       *this->repl_data_arr[ind2] = temp_repl;
     }
 
     // Get the index of the cold queue element closest to eviction
-    size_t get_victim(SplruNode *root, int repl_type) {
+    size_t get_victim(ThreeTreeNode *root, int repl_type) {
       if (repl_type == 1 || repl_type == 2) {
         // LRU and FIFO selection
-        SplruNode *trace_node = root;
+        ThreeTreeNode *trace_node = root;
         size_t evict_ind = 0;
         while (trace_node->left != nullptr && trace_node->right != nullptr) {
           if (trace_node->direction) {
@@ -110,7 +114,18 @@ private:
             evict_ind = evict_ind * 2;
           }
         }
-        return evict_ind;
+        if (root == this->cold) {
+          return evict_ind;
+        } else {
+          if (evict_ind < this->assoc / 4) {
+            // Selecting from the probation queue, whether tracing from hot or
+            // prob One less level of recursion means different offset
+            return evict_ind + (this->assoc / 4);
+          } else {
+            // Hot queue correctly indexes using recursion
+            return evict_ind;
+          }
+        }
       } else {
         // Random selection
         // Range of random values depends on the root node used
@@ -129,10 +144,10 @@ private:
     }
 
     // Get the index of the hot queue element furthest from eviction
-    size_t get_safe(SplruNode *root, int repl_type) {
+    size_t get_safe(ThreeTreeNode *root, int repl_type) {
       if (repl_type == 1 || repl_type == 2) {
         // LRU and FIFO selection
-        SplruNode *trace_node = root;
+        ThreeTreeNode *trace_node = root;
         size_t evict_ind = 0;
         while (trace_node->left != nullptr && trace_node->right != nullptr) {
           if (trace_node->direction) {
@@ -155,30 +170,16 @@ private:
     // touching
     void touch(size_t ind, int repl_type, bool is_first_placement) {
       // Random (0) has no touching logic
-      if (repl_type == 1) {
-        // LRU
-        SplruNode *trace = this->leaf_nodes[ind];
-        while (trace->parent != NULL) {
-          bool is_left_child = trace->parent->left == trace;
-          if (is_left_child) {
-            trace->parent->direction = true;
-          } else {
-            trace->parent->direction = false;
-          }
-          trace = trace->parent;
-        }
-      } else if (repl_type == 2) {
-        // FIFO
-        if (!is_first_placement) {
-          // Only alters the metadata on the first placement
+      if (repl_type == 1 || repl_type == 2) {
+        // LRU or FIFO differ only in re-touching logic, not first insertion
+        if (repl_type == 2 && !is_first_placement) {
           return;
         }
-        SplruNode *trace = this->leaf_nodes[ind];
-        while (trace->parent != NULL) {
+        ThreeTreeNode *trace = this->leaf_nodes[ind];
+        while (trace->parent != nullptr) {
           bool is_left_child = trace->parent->left == trace;
           if (is_left_child) {
             trace->parent->direction = true;
-            break;
           } else {
             trace->parent->direction = false;
           }
@@ -189,9 +190,9 @@ private:
   };
 
   size_t count;
-  SplruTree *tree;
+  ThreeTreeTree *tree;
 
-  // SPLRU variant parameters
+  // 3Tree variant parameters
   // Cold tree type
   // 0: Random
   // 1: LRU
@@ -210,9 +211,9 @@ private:
   int probation_type;
 
 public:
-  typedef SplruRPParams Params;
-  Splru(const Params &p);
-  ~Splru() = default;
+  typedef ThreeTreeRPParams Params;
+  ThreeTree(const Params &p);
+  ~ThreeTree() = default;
 
   // Invalidate an entry
   void
