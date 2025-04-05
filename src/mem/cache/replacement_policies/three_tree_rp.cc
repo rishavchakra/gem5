@@ -113,10 +113,7 @@ ThreeTree::getVictim(const ReplacementCandidates &candidates) const {
   // Should seek from the cold queue
   // or, if the probation flag allows it, occasionally from the probation area
   ThreeTreeNode *trace_node;
-  if (probation_type == 0) {
-    // Never
-    trace_node = this->tree->cold;
-  } else if (probation_type == 1) {
+  if (probation_type == 1) {
     // Half random
     if (rand() % 2 == 0) {
       trace_node = this->tree->cold;
@@ -137,6 +134,9 @@ ThreeTree::getVictim(const ReplacementCandidates &candidates) const {
     } else {
       trace_node = this->tree->probation;
     }
+  } else {
+    // Never
+    trace_node = this->tree->cold;
   }
 
   int repl_type;

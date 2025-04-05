@@ -62,7 +62,7 @@ private:
     size_t assoc;
 
     ThreeTreeTree(int assoc) {
-      int tree_depth = int(log(tree_depth));
+      int tree_depth = int(log(assoc));
       ThreeTreeNode **leaf_nodes = new ThreeTreeNode *[assoc];
       ThreeTreeReplData **repl_data_arr = new ThreeTreeReplData *[assoc];
       ThreeTreeNode *tree =
