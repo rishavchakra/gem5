@@ -149,8 +149,9 @@ ThreeTree::getVictim(const ReplacementCandidates &candidates) const {
   size_t evict_ind = this->tree->get_victim(trace_node, repl_type);
 
   // New element should be in MRU position
-  ThreeTreeNode *trace_node = this->tree->leaf_nodes[evict_ind];
-  while (trace_node->parent != nullptr && trace_node->parent != this->tree->hot) {
+  trace_node = this->tree->leaf_nodes[evict_ind];
+  while (trace_node->parent != nullptr &&
+         trace_node->parent != this->tree->hot) {
     bool is_left_child = trace_node->parent->left == trace_node;
     if (is_left_child) {
       trace_node->parent->direction = true;
@@ -160,7 +161,7 @@ ThreeTree::getVictim(const ReplacementCandidates &candidates) const {
     trace_node = trace_node->parent;
   }
 
-  return this->repl_data_arr[evict_ind];
+  return this->tree->repl_data_arr[evict_ind];
 }
 
 std::shared_ptr<ReplacementData> ThreeTree::instantiateEntry() {
