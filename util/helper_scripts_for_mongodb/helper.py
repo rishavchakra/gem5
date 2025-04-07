@@ -38,7 +38,7 @@ from pymongo import MongoClient
 
 
 def get_database(uri, db_name, collection_name):
-    client = MongoClient(uri)
+    client = MongoClient(uri, uuidRepresentation=UuidRepresentation.STANDARD)
     db = client[db_name]
     collection = db[collection_name]
     return collection

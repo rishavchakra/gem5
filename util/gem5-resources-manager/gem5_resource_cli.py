@@ -94,7 +94,7 @@ def get_database(collection="versions_test", uri=MONGO_URI, db="gem5-vision"):
     """
     CONNECTION_STRING = uri
     try:
-        client = MongoClient(CONNECTION_STRING)
+        client = MongoClient(CONNECTION_STRING, uuidRepresentation=UuidRepresentation.STANDARD)
         client.server_info()
     except:
         print("\nCould not connect to MongoDB")

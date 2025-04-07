@@ -74,7 +74,9 @@ class MongoDBClient(Client):
         """
 
         try:
-            client = MongoClient(mongo_uri)
+            client = MongoClient(
+                mongo_uri, uuidRepresentation=UuidRepresentation.STANDARD
+            )
             client.admin.command("ping")
         except ConnectionFailure:
             client.close()

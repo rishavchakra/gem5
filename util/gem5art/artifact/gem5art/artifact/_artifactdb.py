@@ -152,7 +152,11 @@ class ArtifactMongoDB(ArtifactDB):
         # Note: Need "connect=False" so that we don't connect until the first
         # time we interact with the database. Required for the gem5 running
         # celery server
-        self.db = MongoClient(host=uri, connect=False).artifact_database
+        self.db = MongoClient(
+            host=uri,
+            connect=False,
+            uuidRepresentation=UuidRepresentation.STANDARD
+        ).artifact_database
         self.artifacts = self.db.artifacts
         self.fs = gridfs.GridFSBucket(self.db, disable_md5=True)
 
