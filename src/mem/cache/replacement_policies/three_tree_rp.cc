@@ -46,14 +46,15 @@ void ThreeTree::invalidate(
   size_t trace_ind = repl_data->tree_index;
   std::vector<bool> &tree = *repl_data->tree;
   while (trace_ind > 0) {
+    size_t parent_ind = (trace_ind - 1) / 2;
     if (trace_ind % 2 == 0) {
       // Right child
-      tree[trace_ind] = true;
+      tree[parent_ind] = true;
     } else {
       // Left child
-      tree[trace_ind] = false;
+      tree[parent_ind] = false;
     }
-    trace_ind = trace_ind / 2;
+    trace_ind = parent_ind;
   }
 }
 
