@@ -13,10 +13,10 @@ namespace replacement_policy {
 class ThreeTree : public Base {
 protected:
   struct ThreeTreeReplData : ReplacementData {
-    const int tree_index;
-    const size_t cache_index;
+    size_t tree_index;
+    size_t cache_index;
     std::vector<bool> *tree;
-    ThreeTreeReplData(const int cache_index, std::vector<bool> *tree);
+    ThreeTreeReplData(int cache_index);
   };
 
 private:
