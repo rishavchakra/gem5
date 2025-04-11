@@ -9,7 +9,7 @@ namespace gem5 {
 namespace replacement_policy {
 
 ThreeTree::ThreeTreeReplData::ThreeTreeReplData(const int cache_index,
-                                                std::vector<bool> *tree, )
+                                                std::vector<bool> *tree)
     : cache_index(cache_index), tree(tree) {}
 
 ThreeTree::ThreeTree(const Params &p) : Base(p) {
@@ -17,12 +17,12 @@ ThreeTree::ThreeTree(const Params &p) : Base(p) {
 
   assoc = p.a;
   obj_count = 0;
-  cold_tree = std::vector(assoc);
-  prob_tree = std::vector(assoc);
-  hot_tree = std::vector(assoc);
-  std::fill(cold_tree.begin(), cold_tree.end(), false);
-  std::fill(prob_tree.begin(), prob_tree.end(), false);
-  std::fill(hot_tree.begin(), hot_tree.end(), false);
+  cold_tree = std::vector<bool>(assoc, false);
+  prob_tree = std::vector<bool>(assoc, false);
+  hot_tree = std::vector<bool>(assoc, false);
+  // std::fill(cold_tree.begin(), cold_tree.end(), false);
+  // std::fill(prob_tree.begin(), prob_tree.end(), false);
+  // std::fill(hot_tree.begin(), hot_tree.end(), false);
 }
 
 void ThreeTree::invalidate(
@@ -44,7 +44,7 @@ void ThreeTree::invalidate(
 }
 
 void ThreeTree::touch(
-    const std::shared_ptr<ReplacementData> &replacement_data) {
+    const std::shared_ptr<ReplacementData> &replacement_data) const {
   std::shared_ptr<ThreeTreeReplData> repl_data =
       std::static_pointer_cast<ThreeTreeReplData>(replacement_data);
 
@@ -118,12 +118,12 @@ void ThreeTree::touch(
 }
 
 void ThreeTree::reset(
-    const std::shared_ptr<ReplacementData> &replacement_data) {
+    const std::shared_ptr<ReplacementData> &replacement_data) const {
   touch(replacement_data);
 }
 
 ReplaceableEntry *
-ThreeTree::getVictim(const ReplacementCandidate &candidates) const {
+ThreeTree::getVictim(const ReplacementCandidates &candidates) const {
 
   size_t tree_choice = rand() % 8;
   size_t trace_ind = 0;
@@ -177,19 +177,22 @@ ThreeTree::getVictim(const ReplacementCandidate &candidates) const {
 }
 
 std::shared_ptr<ReplacementData> ThreeTree::instantiateEntry() {
-  ThreeTreeReplData *repl = new ThreeTreeReplData(obj_count);
-  if (count < (assoc / 4)) {
-    repl->tree_index = cache_index;
-    this->cold_repl_arr[count] = repl;
-  } else if (count < (assoc / 2)) {
-    repl->tree_index = cache_index - (assoc / 4);
-    this->prob_repl_arr[count - 4] = repl;
+  ThreeTreeReplData *repl = new ThreeTreeReplData(obj_count, nullptr);
+  if (obj_count < (assoc / 4)) {
+    repl->tree_index = obj_count;
+    repl->tree = &cold_tree;
+    this->cold_repl_arr[obj_count] = repl;
+  } else if (obj_count < (assoc / 2)) {
+    repl->tree_index = obj_count - (assoc / 4);
+    repl->tree = &prob_tree;
+    this->prob_repl_arr[obj_count - 4] = repl;
   } else {
-    repl->tree_index = cache_index - (assoc / 2);
-    this->hot_repl_arr[count - 8] = repl;
+    repl->tree_index = obj_count - (assoc / 2);
+    repl->tree = &hot_tree;
+    this->hot_repl_arr[obj_count - 8] = repl;
   }
-  this->count++;
-  return std::shared::ptr<ReplacementData>(repl);
+  this->obj_count++;
+  return std::shared_ptr<ReplacementData>(repl);
 }
 
 } // namespace replacement_policy
