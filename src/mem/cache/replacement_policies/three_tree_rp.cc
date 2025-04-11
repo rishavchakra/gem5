@@ -19,9 +19,15 @@ ThreeTree::ThreeTree(const Params &p) : Base(p) {
   cold_tree = std::vector<bool>(assoc, false);
   prob_tree = std::vector<bool>(assoc, false);
   hot_tree = std::vector<bool>(assoc, false);
-  // std::fill(cold_tree.begin(), cold_tree.end(), false);
-  // std::fill(prob_tree.begin(), prob_tree.end(), false);
-  // std::fill(hot_tree.begin(), hot_tree.end(), false);
+
+  cold_repl_arr = new ThreeTreeReplData *[assoc / 4];
+  prob_repl_arr = new ThreeTreeReplData *[assoc / 4];
+  hot_repl_arr = new ThreeTreeReplData *[assoc / 2];
+
+  size_t main_depth = (int)round(log2(assoc));
+  hot_depth = main_depth - 1;
+  cold_depth = hot_depth - 1;
+  prob_depth = hot_depth - 1;
 }
 
 void ThreeTree::invalidate(
@@ -50,7 +56,8 @@ void ThreeTree::touch(
   std::vector<bool> *subtree = repl_data->tree;
   size_t tree_index = repl_data->tree_index;
 
-  const std::vector<bool> *next_tree = nullptr;
+  bool should_swap = false;
+  const std::vector<bool> &next_tree = hot_tree;
   ThreeTreeReplData **cur_repl_arr = nullptr;
   ThreeTreeReplData **next_repl_arr = nullptr;
   size_t next_tree_size;
@@ -61,17 +68,18 @@ void ThreeTree::touch(
     next_tree_size = assoc / 4;
     next_repl_arr = cold_repl_arr;
     next_repl_arr = prob_repl_arr;
+    should_swap = true;
   } else if (subtree == &prob_tree) {
     next_tree = &hot_tree;
     next_tree_depth = hot_depth;
     next_tree_size = assoc / 2;
     next_repl_arr = prob_repl_arr;
     next_repl_arr = hot_repl_arr;
+    should_swap = true;
   }
 
-  const std::vector<bool> &touch_tree = &hot_tree;
   size_t touch_ind;
-  if (next_tree != nullptr) {
+  if (should_swap) {
     // Find LRU of next_tree
     size_t trace_ind = 0;
     for (int i = 0; i < next_tree_depth; ++i) {
@@ -85,7 +93,6 @@ void ThreeTree::touch(
     }
 
     touch_ind = trace_ind;
-    touch_tree = *next_tree;
 
     size_t next_lru_ind = trace_ind - (next_tree_size - 1);
 
@@ -107,10 +114,10 @@ void ThreeTree::touch(
     size_t parent_ind = (touch_ind - 1) / 2;
     if (touch_ind % 2 == 0) {
       // Right child
-      touch_tree[parent_ind] = false;
+      next_tree[parent_ind] = false;
     } else {
       // Left child
-      touch_tree[parent_ind] = true;
+      next_tree[parent_ind] = true;
     }
     touch_ind = parent_ind;
   }
@@ -126,7 +133,7 @@ ThreeTree::getVictim(const ReplacementCandidates &candidates) const {
 
   size_t tree_choice = rand() % 8;
   size_t trace_ind = 0;
-  const std::vector<bool> &evict_tree;
+  const std::vector<bool> &evict_tree = cold_tree;
   ThreeTreeReplData **repl_arr = nullptr;
   size_t tree_depth;
   bool chose_cold = false, chose_prob = false, chose_hot = false;
