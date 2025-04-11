@@ -59,10 +59,12 @@ void ThreeTree::touch(
   bool should_swap = false;
   ThreeTreeReplData **cur_repl_arr = nullptr;
   ThreeTreeReplData **next_repl_arr = nullptr;
+  std::vector<bool> *next_tree = &hot_tree;
   size_t next_tree_size;
   size_t next_tree_depth;
   bool chose_cold = false, chose_prob = false;
   if (subtree == &cold_tree) {
+    next_tree = &cold_tree;
     next_tree_depth = prob_depth;
     next_tree_size = assoc / 4;
     next_repl_arr = cold_repl_arr;
@@ -70,6 +72,7 @@ void ThreeTree::touch(
     should_swap = true;
     chose_cold = true;
   } else if (subtree == &prob_tree) {
+    next_tree = &prob_tree;
     next_tree_depth = hot_depth;
     next_tree_size = assoc / 2;
     next_repl_arr = prob_repl_arr;
@@ -84,12 +87,7 @@ void ThreeTree::touch(
     size_t trace_ind = 0;
     for (int i = 0; i < next_tree_depth; ++i) {
       bool trace_right = false;
-      if (chose_cold) {
-        trace_right = prob_tree[trace_ind];
-      } else if (chose_prob) {
-        trace_right = prob_tree[trace_ind];
-      }
-      if (trace_right) {
+      if (next_tree->at(trace_ind)) {
         // Trace right
         trace_ind = trace_ind * 2 + 2;
       } else {
@@ -120,18 +118,10 @@ void ThreeTree::touch(
     size_t parent_ind = (touch_ind - 1) / 2;
     if (touch_ind % 2 == 0) {
       // Right child
-      if (chose_cold) {
-        prob_tree[parent_ind] = false;
-      } else {
-        hot_tree[parent_ind] = false;
-      }
+      next_tree.at(parent_ind) = false;
     } else {
       // Left child
-      if (chose_cold) {
-        prob_tree[parent_ind] = false;
-      } else {
-        hot_tree[parent_ind] = false;
-      }
+      next_tree.at(parent_ind) = true;
     }
     touch_ind = parent_ind;
   }
@@ -145,6 +135,7 @@ void ThreeTree::reset(
 ReplaceableEntry *
 ThreeTree::getVictim(const ReplacementCandidates &candidates) const {
 
+  std::vector<bool> *evict_tree;
   size_t tree_choice = rand() % 8;
   size_t trace_ind = 0;
   ThreeTreeReplData **repl_arr = nullptr;
@@ -152,16 +143,19 @@ ThreeTree::getVictim(const ReplacementCandidates &candidates) const {
   bool chose_cold = false, chose_prob = false, chose_hot = false;
   if (tree_choice < 5) {
     // Choose from cold queue
+    evict_tree = cold_tree;
     repl_arr = cold_repl_arr;
     tree_depth = cold_depth;
     chose_cold = true;
   } else if (tree_choice < 7) {
     // Choose from probation queue
+    evict_tree = prob_tree;
     repl_arr = prob_repl_arr;
     tree_depth = prob_depth;
     chose_prob = true;
   } else {
     // Choose from hot queue;
+    evict_tree = hot_tree;
     repl_arr = hot_repl_arr;
     tree_depth = hot_depth;
     chose_hot = true;
@@ -169,14 +163,7 @@ ThreeTree::getVictim(const ReplacementCandidates &candidates) const {
 
   for (int i = 0; i < tree_depth; ++i) {
     bool trace_right = false;
-    if (chose_cold) {
-      trace_right = cold_tree[trace_ind];
-    } else if (chose_prob) {
-      trace_right = prob_tree[trace_ind];
-    } else {
-      trace_right = hot_tree[trace_ind];
-    }
-    if (trace_right) {
+    if (evict_tree->at(trace_ind)) {
       // Trace right
       trace_ind = trace_ind * 2 + 2;
     } else {
