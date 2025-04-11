@@ -16,9 +16,9 @@ ThreeTree::ThreeTree(const Params &p) : Base(p) {
 
   assoc = p.a;
   obj_count = 0;
-  cold_tree = std::vector<bool>(assoc, false);
-  prob_tree = std::vector<bool>(assoc, false);
-  hot_tree = std::vector<bool>(assoc, false);
+  cold_tree = new std::vector<bool>(assoc, false);
+  prob_tree = new std::vector<bool>(assoc, false);
+  hot_tree = new std::vector<bool>(assoc, false);
 
   cold_repl_arr = new ThreeTreeReplData *[assoc / 4];
   prob_repl_arr = new ThreeTreeReplData *[assoc / 4];
@@ -28,6 +28,15 @@ ThreeTree::ThreeTree(const Params &p) : Base(p) {
   hot_depth = main_depth - 1;
   cold_depth = hot_depth - 1;
   prob_depth = hot_depth - 1;
+}
+
+ThreeTree::~ThreeTree() {
+  delete cold_tree;
+  delete prob_tree;
+  delete hot_tree;
+  delete cold_repl_arr;
+  delete prob_repl_arr;
+  delete hot_repl_arr;
 }
 
 void ThreeTree::invalidate(
@@ -59,20 +68,20 @@ void ThreeTree::touch(
   bool should_swap = false;
   ThreeTreeReplData **cur_repl_arr = nullptr;
   ThreeTreeReplData **next_repl_arr = nullptr;
-  std::vector<bool> *next_tree = &hot_tree;
+  std::vector<bool> *next_tree = hot_tree;
   size_t next_tree_size;
   size_t next_tree_depth;
   bool chose_cold = false, chose_prob = false;
-  if (subtree == &cold_tree) {
-    next_tree = &cold_tree;
+  if (subtree == cold_tree) {
+    next_tree = prob_tree;
     next_tree_depth = prob_depth;
     next_tree_size = assoc / 4;
     next_repl_arr = cold_repl_arr;
     next_repl_arr = prob_repl_arr;
     should_swap = true;
     chose_cold = true;
-  } else if (subtree == &prob_tree) {
-    next_tree = &prob_tree;
+  } else if (subtree == prob_tree) {
+    next_tree = hot_tree;
     next_tree_depth = hot_depth;
     next_tree_size = assoc / 2;
     next_repl_arr = prob_repl_arr;
@@ -86,7 +95,6 @@ void ThreeTree::touch(
     // Find LRU of next tree
     size_t trace_ind = 0;
     for (int i = 0; i < next_tree_depth; ++i) {
-      bool trace_right = false;
       if (next_tree->at(trace_ind)) {
         // Trace right
         trace_ind = trace_ind * 2 + 2;
@@ -162,7 +170,6 @@ ThreeTree::getVictim(const ReplacementCandidates &candidates) const {
   }
 
   for (int i = 0; i < tree_depth; ++i) {
-    bool trace_right = false;
     if (evict_tree->at(trace_ind)) {
       // Trace right
       trace_ind = trace_ind * 2 + 2;

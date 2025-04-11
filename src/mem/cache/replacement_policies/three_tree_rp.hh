@@ -20,9 +20,9 @@ protected:
   };
 
 private:
-  std::vector<bool> cold_tree;
-  std::vector<bool> prob_tree;
-  std::vector<bool> hot_tree;
+  std::vector<bool> *cold_tree;
+  std::vector<bool> *prob_tree;
+  std::vector<bool> *hot_tree;
 
   ThreeTreeReplData **cold_repl_arr;
   ThreeTreeReplData **prob_repl_arr;
@@ -38,7 +38,7 @@ private:
 public:
   typedef ThreeTreeRPParams Params;
   ThreeTree(const Params &p);
-  ~ThreeTree() = default;
+  ~ThreeTree();
 
   void
   invalidate(const std::shared_ptr<ReplacementData> &replacement_data) override;
