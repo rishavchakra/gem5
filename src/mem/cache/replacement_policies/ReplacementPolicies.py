@@ -191,10 +191,10 @@ class SIEVERP(BaseReplacementPolicy):
 #     assoc = Param.Int(Parent.assoc, "Number of leaves in each tree")
 
 
-class ThreeTreeRP(BaseReplacementPolicy):
-    type = "ThreeTreeRP"
-    cxx_class = "gem5::replacement_policy::ThreeTree"
-    cxx_header = "mem/cache/replacement_policies/three_tree_rp.hh"
+class TwoTreeRP(BaseReplacementPolicy):
+    type = "TwoTreeRP"
+    cxx_class = "gem5::replacement_policy::TwoTree"
+    cxx_header = "mem/cache/replacement_policies/two_tree_rp.hh"
     assoc = Param.Int(Parent.assoc, "Number of leaves in each tree")
     cold_repl = Param.Int(
         Parent.cold_repl, "Cold Queue replacement algorithm choice"

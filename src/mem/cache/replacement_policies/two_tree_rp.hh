@@ -1,34 +1,34 @@
-#ifndef __MEM_CACHE_REPLACEMENT_POLICIES_3TREE_RP_HH__
-#define __MEM_CACHE_REPLACEMENT_POLICIES_3TREE_RP_HH__
+#ifndef __MEM_CACHE_REPLACEMENT_POLICIES_2TREE_RP_HH__
+#define __MEM_CACHE_REPLACEMENT_POLICIES_2TREE_RP_HH__
 
 #include "mem/cache/replacement_policies/base.hh"
 
 #include <cmath>
 #include <vector>
 
-#include "params/ThreeTreeRP.hh"
+#include "params/TwoTreeRP.hh"
 
 namespace gem5 {
 
-struct ThreeTreeRPParams;
+struct TwoTreeRPParams;
 
 namespace replacement_policy {
 
-class ThreeTree : public Base {
+class TwoTree : public Base {
 private:
-  struct ThreeTreeNode {
-    ThreeTreeNode *left;
-    ThreeTreeNode *right;
-    ThreeTreeNode *parent;
+  struct TwoTreeNode {
+    TwoTreeNode *left;
+    TwoTreeNode *right;
+    TwoTreeNode *parent;
     bool direction;
 
-    ThreeTreeNode(ThreeTreeNode *parent, int depth, int ind,
-                  ThreeTreeNode **leaf_arr)
+    TwoTreeNode(TwoTreeNode *parent, int depth, int ind,
+                  TwoTreeNode **leaf_arr)
         : direction(false), parent(parent) {
       // Double check this indexing
       if (depth >= 0) {
-        this->left = new ThreeTreeNode(this, depth - 1, ind * 2, leaf_arr);
-        this->right = new ThreeTreeNode(this, depth - 1, ind * 2 + 1, leaf_arr);
+        this->left = new TwoTreeNode(this, depth - 1, ind * 2, leaf_arr);
+        this->right = new TwoTreeNode(this, depth - 1, ind * 2 + 1, leaf_arr);
       } else {
         this->left = nullptr;
         this->right = nullptr;
@@ -36,7 +36,7 @@ private:
       }
     }
 
-    ~ThreeTreeNode() {
+    ~TwoTreeNode() {
       if (this->left != nullptr && this->right != nullptr) {
         delete left;
         delete right;
@@ -45,29 +45,29 @@ private:
   };
 
 protected:
-  struct ThreeTreeReplData : ReplacementData {
+  struct TwoTreeReplData : ReplacementData {
     size_t leaf_ind;
 
-    ThreeTreeReplData(size_t ind);
+    TwoTreeReplData(size_t ind);
   };
 
 private:
-  struct ThreeTreeTree {
-    ThreeTreeNode *cold;
-    ThreeTreeNode *hot;
-    ThreeTreeNode *probation;
-    ThreeTreeNode **leaf_nodes;
-    ThreeTreeReplData **repl_data_arr;
-    ThreeTreeNode *trash_node;
+  struct TwoTreeTree {
+    TwoTreeNode *cold;
+    TwoTreeNode *hot;
+    TwoTreeNode *probation;
+    TwoTreeNode **leaf_nodes;
+    TwoTreeReplData **repl_data_arr;
+    TwoTreeNode *trash_node;
     size_t assoc;
 
-    ThreeTreeTree(int assoc) {
+    TwoTreeTree(int assoc) {
       int tree_depth = int(log(assoc));
-      ThreeTreeNode **leaf_nodes = new ThreeTreeNode *[assoc];
-      ThreeTreeReplData **repl_data_arr = new ThreeTreeReplData *[assoc];
-      ThreeTreeNode *tree =
-          new ThreeTreeNode(nullptr, tree_depth, 0, leaf_nodes);
-      ThreeTreeNode *first_left = tree->left;
+      TwoTreeNode **leaf_nodes = new TwoTreeNode *[assoc];
+      TwoTreeReplData **repl_data_arr = new TwoTreeReplData *[assoc];
+      TwoTreeNode *tree =
+          new TwoTreeNode(nullptr, tree_depth, 0, leaf_nodes);
+      TwoTreeNode *first_left = tree->left;
       tree->left = first_left->right;
       this->probation = first_left->right;
       this->hot = tree;
@@ -82,7 +82,7 @@ private:
       this->repl_data_arr = repl_data_arr;
     }
 
-    ~ThreeTreeTree() {
+    ~TwoTreeTree() {
       delete leaf_nodes;
       delete repl_data_arr;
       delete hot;
@@ -91,19 +91,19 @@ private:
     }
 
     void swap_leaves(size_t ind1, size_t ind2) {
-      // ThreeTreeNode temp_node = *this->leaf_nodes[ind1];
+      // TwoTreeNode temp_node = *this->leaf_nodes[ind1];
       // *this->leaf_nodes[ind1] = *this->leaf_nodes[ind2];
       // *this->leaf_nodes[ind2] = temp_node;
-      ThreeTreeReplData temp_repl = *this->repl_data_arr[ind1];
+      TwoTreeReplData temp_repl = *this->repl_data_arr[ind1];
       *this->repl_data_arr[ind1] = *this->repl_data_arr[ind2];
       *this->repl_data_arr[ind2] = temp_repl;
     }
 
     // Get the index of the cold queue element closest to eviction
-    size_t get_victim(ThreeTreeNode *root, int repl_type) {
+    size_t get_victim(TwoTreeNode *root, int repl_type) {
       if (repl_type == 1 || repl_type == 2) {
         // LRU and FIFO selection
-        ThreeTreeNode *trace_node = root;
+        TwoTreeNode *trace_node = root;
         size_t evict_ind = 0;
         while (trace_node->left != nullptr && trace_node->right != nullptr) {
           if (trace_node->direction) {
@@ -144,10 +144,10 @@ private:
     }
 
     // Get the index of the hot queue element furthest from eviction
-    size_t get_safe(ThreeTreeNode *root, int repl_type) {
+    size_t get_safe(TwoTreeNode *root, int repl_type) {
       if (repl_type == 1 || repl_type == 2) {
         // LRU and FIFO selection
-        ThreeTreeNode *trace_node = root;
+        TwoTreeNode *trace_node = root;
         size_t evict_ind = 0;
         while (trace_node->left != nullptr && trace_node->right != nullptr) {
           if (trace_node->direction) {
@@ -175,7 +175,7 @@ private:
         if (repl_type == 2 && !is_first_placement) {
           return;
         }
-        ThreeTreeNode *trace = this->leaf_nodes[ind];
+        TwoTreeNode *trace = this->leaf_nodes[ind];
         while (trace->parent != nullptr) {
           bool is_left_child = trace->parent->left == trace;
           if (is_left_child) {
@@ -190,7 +190,7 @@ private:
   };
 
   size_t count;
-  ThreeTreeTree *tree;
+  TwoTreeTree *tree;
 
   // 3Tree variant parameters
   // Cold tree type
@@ -211,9 +211,9 @@ private:
   int probation_type;
 
 public:
-  typedef ThreeTreeRPParams Params;
-  ThreeTree(const Params &p);
-  ~ThreeTree() = default;
+  typedef TwoTreeRPParams Params;
+  TwoTree(const Params &p);
+  ~TwoTree() = default;
 
   // Invalidate an entry
   void

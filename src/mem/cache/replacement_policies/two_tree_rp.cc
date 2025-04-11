@@ -1,18 +1,18 @@
-#include "mem/cache/replacement_policies/three_tree_rp.hh"
+#include "mem/cache/replacement_policies/two_tree_rp.hh"
 #include "base/logging.hh"
-#include "params/ThreeTreeRP.hh"
+#include "params/TwoTreeRP.hh"
 
 namespace gem5 {
 
 namespace replacement_policy {
 
-ThreeTree::ThreeTreeReplData::ThreeTreeReplData(size_t ind) : leaf_ind(ind) {}
+TwoTree::TwoTreeReplData::TwoTreeReplData(size_t ind) : leaf_ind(ind) {}
 
-ThreeTree::ThreeTree(const Params &p)
+TwoTree::TwoTree(const Params &p)
     : Base(p), cold_repl_type(p.cold_repl), hot_repl_type(p.hot_repl),
       probation_type(p.probation_type) {
   fatal_if(p.assoc < 4, "Associativity (assoc) cannot be less than 4");
-  tree = new ThreeTreeTree(p.assoc);
+  tree = new TwoTreeTree(p.assoc);
   count = 0;
   fatal_if(p.cold_repl < 0 || p.cold_repl > 2,
            "Cold Queue replacement flag invalid");
@@ -22,11 +22,11 @@ ThreeTree::ThreeTree(const Params &p)
            "Probation choice flag invalid");
 }
 
-void ThreeTree::invalidate(const std::shared_ptr<ReplacementData> &repl_data) {
-  std::shared_ptr<ThreeTreeReplData> three_tree_repl =
-      std::static_pointer_cast<ThreeTreeReplData>(repl_data);
-  ThreeTreeTree *tree = this->tree;
-  size_t leaf_ind = three_tree_repl->leaf_ind;
+void TwoTree::invalidate(const std::shared_ptr<ReplacementData> &repl_data) {
+  std::shared_ptr<TwoTreeReplData> two_tree_repl =
+      std::static_pointer_cast<TwoTreeReplData>(repl_data);
+  TwoTreeTree *tree = this->tree;
+  size_t leaf_ind = two_tree_repl->leaf_ind;
 
   size_t cold_ind = leaf_ind;
   size_t cold_assoc = tree->assoc / 4;
@@ -44,7 +44,7 @@ void ThreeTree::invalidate(const std::shared_ptr<ReplacementData> &repl_data) {
   // Invalidation logic: the opposite of touching
   if (this->cold_repl_type == 1) {
     // LRU
-    ThreeTreeNode *trace = tree->leaf_nodes[cold_ind];
+    TwoTreeNode *trace = tree->leaf_nodes[cold_ind];
     while (trace->parent != NULL) {
       bool is_left_child = trace->parent->left == trace;
       if (is_left_child) {
@@ -56,10 +56,10 @@ void ThreeTree::invalidate(const std::shared_ptr<ReplacementData> &repl_data) {
     }
   } else if (this->cold_repl_type == 2) {
     // FIFO
-    std::stack<ThreeTreeNode *> rec_stack;
+    std::stack<TwoTreeNode *> rec_stack;
     rec_stack.push(tree->cold);
     while (!rec_stack.empty()) {
-      ThreeTreeNode *cur = rec_stack.top();
+      TwoTreeNode *cur = rec_stack.top();
       rec_stack.pop();
       cur->direction = false;
       if (cur->left != nullptr && cur->right != nullptr) {
@@ -68,7 +68,7 @@ void ThreeTree::invalidate(const std::shared_ptr<ReplacementData> &repl_data) {
       }
     }
 
-    ThreeTreeNode *trace = tree->leaf_nodes[cold_ind];
+    TwoTreeNode *trace = tree->leaf_nodes[cold_ind];
     while (trace->parent != NULL) {
       bool is_left_child = trace->parent->left == trace;
       if (is_left_child) {
@@ -81,11 +81,11 @@ void ThreeTree::invalidate(const std::shared_ptr<ReplacementData> &repl_data) {
   }
 }
 
-void ThreeTree::touch(const std::shared_ptr<ReplacementData> &repl_data) const {
-  std::shared_ptr<ThreeTreeReplData> three_tree_repl =
-      std::static_pointer_cast<ThreeTreeReplData>(repl_data);
-  ThreeTreeTree *tree = this->tree;
-  size_t leaf_ind = three_tree_repl->leaf_ind;
+void TwoTree::touch(const std::shared_ptr<ReplacementData> &repl_data) const {
+  std::shared_ptr<TwoTreeReplData> two_tree_repl =
+      std::static_pointer_cast<TwoTreeReplData>(repl_data);
+  TwoTreeTree *tree = this->tree;
+  size_t leaf_ind = two_tree_repl->leaf_ind;
   size_t cold_assoc = tree->assoc / 4;
   size_t hot_ind = leaf_ind;
 
@@ -104,15 +104,15 @@ void ThreeTree::touch(const std::shared_ptr<ReplacementData> &repl_data) const {
   tree->touch(hot_ind, this->hot_repl_type, is_first_placement);
 }
 
-void ThreeTree::reset(const std::shared_ptr<ReplacementData> &repl_data) const {
+void TwoTree::reset(const std::shared_ptr<ReplacementData> &repl_data) const {
   touch(repl_data);
 }
 
 ReplaceableEntry *
-ThreeTree::getVictim(const ReplacementCandidates &candidates) const {
+TwoTree::getVictim(const ReplacementCandidates &candidates) const {
   // Should seek from the cold queue
   // or, if the probation flag allows it, occasionally from the probation area
-  ThreeTreeNode *trace_node;
+  TwoTreeNode *trace_node;
   if (probation_type == 1) {
     // Half random
     if (rand() % 2 == 0) {
@@ -164,11 +164,11 @@ ThreeTree::getVictim(const ReplacementCandidates &candidates) const {
   return candidates.at(this->tree->repl_data_arr[evict_ind]->leaf_ind);
 }
 
-std::shared_ptr<ReplacementData> ThreeTree::instantiateEntry() {
+std::shared_ptr<ReplacementData> TwoTree::instantiateEntry() {
   fatal_if(this->count >= this->tree->assoc,
            "How did count get bigger than assoc?");
 
-  ThreeTreeReplData *repl = new ThreeTreeReplData(count);
+  TwoTreeReplData *repl = new TwoTreeReplData(count);
   this->tree->repl_data_arr[count] = repl;
   this->count++;
   return std::shared_ptr<ReplacementData>(repl);
