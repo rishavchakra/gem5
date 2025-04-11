@@ -126,10 +126,10 @@ void ThreeTree::touch(
     size_t parent_ind = (touch_ind - 1) / 2;
     if (touch_ind % 2 == 0) {
       // Right child
-      next_tree.at(parent_ind) = false;
+      next_tree->at(parent_ind) = false;
     } else {
       // Left child
-      next_tree.at(parent_ind) = true;
+      next_tree->at(parent_ind) = true;
     }
     touch_ind = parent_ind;
   }
@@ -199,15 +199,15 @@ std::shared_ptr<ReplacementData> ThreeTree::instantiateEntry() {
   ThreeTreeReplData *repl = new ThreeTreeReplData(obj_count);
   if (obj_count < (assoc / 4)) {
     repl->tree_index = obj_count;
-    repl->tree = &cold_tree;
+    repl->tree = cold_tree;
     this->cold_repl_arr[obj_count] = repl;
   } else if (obj_count < (assoc / 2)) {
     repl->tree_index = obj_count - (assoc / 4);
-    repl->tree = &prob_tree;
+    repl->tree = prob_tree;
     this->prob_repl_arr[obj_count - 4] = repl;
   } else {
     repl->tree_index = obj_count - (assoc / 2);
-    repl->tree = &hot_tree;
+    repl->tree = hot_tree;
     this->hot_repl_arr[obj_count - 8] = repl;
   }
   this->obj_count++;
