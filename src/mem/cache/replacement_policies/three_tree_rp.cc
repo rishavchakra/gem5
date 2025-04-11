@@ -9,7 +9,7 @@ namespace gem5 {
 namespace replacement_policy {
 
 ThreeTree::ThreeTreeReplData::ThreeTreeReplData(int cache_index)
-    : cache_index(cache_index), tree(null), tree_index(0) {}
+    : cache_index(cache_index), tree(nullptr), tree_index(0) {}
 
 ThreeTree::ThreeTree(const Params &p) : Base(p) {
   fatal_if(p.a < 4, "3Tree undefined with assoc < 4");
@@ -29,14 +29,14 @@ void ThreeTree::invalidate(
   std::shared_ptr<ThreeTreeReplData> repl_data =
       std::static_pointer_cast<ThreeTreeReplData>(replacement_data);
   size_t trace_ind = repl_data->tree_index;
-  std::vector<bool> *tree = repl_data->tree;
+  std::vector<bool> &tree = *repl_data->tree;
   while (trace_ind > 0) {
     if (trace_ind % 2 == 0) {
       // Right child
-      (*tree)[trace_ind] = true;
+      tree[trace_ind] = true;
     } else {
       // Left child
-      (*tree)[trace_ind] = false;
+      tree[trace_ind] = false;
     }
     trace_ind = trace_ind / 2;
   }
@@ -69,7 +69,7 @@ void ThreeTree::touch(
     next_repl_arr = hot_repl_arr;
   }
 
-  const std::vector<bool> *touch_tree = &hot_tree;
+  const std::vector<bool> &touch_tree = &hot_tree;
   size_t touch_ind;
   if (next_tree != nullptr) {
     // Find LRU of next_tree
@@ -85,7 +85,7 @@ void ThreeTree::touch(
     }
 
     touch_ind = trace_ind;
-    touch_tree = next_tree;
+    touch_tree = *next_tree;
 
     size_t next_lru_ind = trace_ind - (next_tree_size - 1);
 
@@ -107,10 +107,10 @@ void ThreeTree::touch(
     size_t parent_ind = (touch_ind - 1) / 2;
     if (touch_ind % 2 == 0) {
       // Right child
-      (*touch_tree)[parent_ind] = false;
+      touch_tree[parent_ind] = false;
     } else {
       // Left child
-      (*touch_tree)[parent_ind] = true;
+      touch_tree[parent_ind] = true;
     }
     touch_ind = parent_ind;
   }
@@ -126,7 +126,7 @@ ThreeTree::getVictim(const ReplacementCandidates &candidates) const {
 
   size_t tree_choice = rand() % 8;
   size_t trace_ind = 0;
-  const std::vector<bool> *evict_tree;
+  const std::vector<bool> &evict_tree;
   ThreeTreeReplData **repl_arr = nullptr;
   size_t tree_depth;
   bool chose_cold = false, chose_prob = false, chose_hot = false;
@@ -151,7 +151,7 @@ ThreeTree::getVictim(const ReplacementCandidates &candidates) const {
   }
 
   for (int i = 0; i < tree_depth; ++i) {
-    if ((*evict_tree)[trace_ind]) {
+    if (evict_tree[trace_ind]) {
       // Trace right
       trace_ind = trace_ind * 2 + 2;
     } else {
@@ -173,10 +173,11 @@ ThreeTree::getVictim(const ReplacementCandidates &candidates) const {
     size_t cache_ind = hot_repl_arr[evict_ind]->cache_index;
     return candidates.at(cache_ind);
   }
+  return candidates.at(0);
 }
 
 std::shared_ptr<ReplacementData> ThreeTree::instantiateEntry() {
-  ThreeTreeReplData *repl = new ThreeTreeReplData(obj_count, nullptr);
+  ThreeTreeReplData *repl = new ThreeTreeReplData(obj_count);
   if (obj_count < (assoc / 4)) {
     repl->tree_index = obj_count;
     repl->tree = &cold_tree;

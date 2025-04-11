@@ -46,6 +46,9 @@ public:
   void touch(
       const std::shared_ptr<ReplacementData> &replacement_data) const override;
 
+  void reset(
+      const std::shared_ptr<ReplacementData> &replacement_data) const override;
+
   ReplaceableEntry *
   getVictim(const ReplacementCandidates &candidates) const override;
 
