@@ -7,6 +7,7 @@ import system
 from m5.objects import *
 
 access_patterns = [
+    "simple",
     "seq",
     "seq-control",
     "zipf",
@@ -14,6 +15,8 @@ access_patterns = [
 ]
 
 replacement_policies = [
+    "2tree",
+    "3tree",
     "sieve",
     "tree-sieve",
     "lru",
@@ -84,6 +87,12 @@ match replacement_policy:
     case "weighted-lru":
         s.system.cpu.icache = L1I_WeightedLRU(assoc)
         s.system.cpu.dcache = L1D_WeightedLRU(assoc)
+    case "2tree":
+        s.system.cpu.icache = L1I_2Tree(assoc)
+        s.system.cpu.dcache = L1D_2Tree(assoc)
+    case "3tree":
+        s.system.cpu.icache = L1I_3Tree(assoc)
+        s.system.cpu.dcache = L1D_3Tree(assoc)
         # s.system.l2cache = L2_WeightedLRU(assoc)
 
 # Connect caches
@@ -97,6 +106,8 @@ s.system.cpu.dcache.mem_side = s.system.membus.cpu_side_ports
 # s.system.l2cache.mem_side = s.system.membus.cpu_side_ports
 
 match access_pattern:
+    case "simple":
+        s.connect_executable("simple")
     case "seq":
         s.connect_executable("sequential-access")
     case "seq-control":

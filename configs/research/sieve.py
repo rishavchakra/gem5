@@ -54,7 +54,7 @@ system.mem_mode = "timing"
 system.mem_ranges = [AddrRange("512MB")]
 
 # ARM CPU, not x86 or RISC-V
-system.cpu = ArmTimingSimpleCPU()
+system.cpu = X86TimingSimpleCPU()
 
 system.cpu.createInterruptController()
 # Connections don't need to be specified for ARM
