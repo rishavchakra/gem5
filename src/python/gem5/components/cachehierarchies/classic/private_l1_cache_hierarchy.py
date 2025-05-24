@@ -85,6 +85,7 @@ class PrivateL1CacheHierarchy(AbstractClassicCacheHierarchy):
         self.membus = membus if membus else self._get_default_membus()
         self._l1d_size = l1d_size
         self._l1i_size = l1i_size
+        self.assoc = assoc
 
     @overrides(AbstractClassicCacheHierarchy)
     def get_mem_side_port(self) -> Port:
@@ -122,13 +123,11 @@ class PrivateL1CacheHierarchy(AbstractClassicCacheHierarchy):
         ]
         # ITLB Page walk caches
         self.iptw_caches = [
-            MMUCache(size="8KiB")
-            for _ in range(board.get_processor().get_num_cores())
+            MMUCache(size="8KiB") for _ in range(board.get_processor().get_num_cores())
         ]
         # DTLB Page walk caches
         self.dptw_caches = [
-            MMUCache(size="8KiB")
-            for _ in range(board.get_processor().get_num_cores())
+            MMUCache(size="8KiB") for _ in range(board.get_processor().get_num_cores())
         ]
 
         if board.has_coherent_io():
