@@ -86,6 +86,7 @@ class PrivateL1CacheHierarchy(AbstractClassicCacheHierarchy):
         self._l1d_size = l1d_size
         self._l1i_size = l1i_size
         self.assoc = assoc
+        self.replacement_policy = replacement_policy
 
     @overrides(AbstractClassicCacheHierarchy)
     def get_mem_side_port(self) -> Port:
