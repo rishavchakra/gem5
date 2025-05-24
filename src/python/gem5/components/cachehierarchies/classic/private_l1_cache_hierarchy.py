@@ -85,8 +85,8 @@ class PrivateL1CacheHierarchy(AbstractClassicCacheHierarchy):
         self.membus = membus if membus else self._get_default_membus()
         self._l1d_size = l1d_size
         self._l1i_size = l1i_size
-        self.assoc = assoc
-        self.replacement_policy = replacement_policy
+        self._assoc = assoc
+        self._replacement_policy = replacement_policy
 
     @overrides(AbstractClassicCacheHierarchy)
     def get_mem_side_port(self) -> Port:
@@ -107,8 +107,8 @@ class PrivateL1CacheHierarchy(AbstractClassicCacheHierarchy):
         self.l1icaches = [
             L1ICache(
                 size=self._l1i_size,
-                assoc=self.assoc,
-                replacement_policy=self.replacement_policy,
+                assoc=self._assoc,
+                replacement_policy=self._replacement_policy,
             )
             for i in range(board.get_processor().get_num_cores())
         ]
@@ -117,8 +117,8 @@ class PrivateL1CacheHierarchy(AbstractClassicCacheHierarchy):
             # L1DCache(size=self._l1d_size)
             L1DCache(
                 size=self._l1d_size,
-                assoc=self.assoc,
-                replacement_policy=self.replacement_policy,
+                assoc=self._assoc,
+                replacement_policy=self._replacement_policy,
             )
             for i in range(board.get_processor().get_num_cores())
         ]
