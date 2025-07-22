@@ -69,7 +69,30 @@ Random::~Random() {
   }
 }
 
-void Random::init(uint32_t s) { gen.seed(s); }
+Random::~Random()
+{
+    if (instances) {
+        // Remove expired weak pointers
+        instances->erase(
+            std::remove_if(instances->begin(), instances->end(),
+                [](const std::weak_ptr<Random>& ptr) {
+                    return ptr.expired();
+                }),
+            instances->end());
+
+        // Clean up instances if empty
+        if (instances->empty()) {
+            delete instances;
+            instances = nullptr;
+        }
+    }
+}
+
+void
+Random::init(uint32_t s)
+{
+    gen.seed(s);
+}
 
 uint64_t Random::globalSeed = 5489;
 Random::Instances *Random::instances = nullptr;
