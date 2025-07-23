@@ -47,28 +47,6 @@ namespace gem5 {
 
 Random::Random(uint32_t s) { init(s); }
 
-Random::~Random() {
-  assert(instances);
-
-  int removed = 0;
-
-  instances->erase(std::remove_if(instances->begin(), instances->end(),
-                                  [&](const auto &s_ptr) {
-                                    removed += s_ptr.expired();
-                                    return s_ptr.expired();
-                                  }));
-
-  // Can only remove one pointer
-  // since we are destroying one
-  // object
-  assert(removed == 1);
-
-  if (instances->empty()) {
-    delete instances;
-    instances = nullptr;
-  }
-}
-
 Random::~Random()
 {
     if (instances) {
