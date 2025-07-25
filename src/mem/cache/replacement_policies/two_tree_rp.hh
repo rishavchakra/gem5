@@ -17,13 +17,12 @@ namespace replacement_policy {
 class TwoTree : public Base {
 private:
   struct TwoTreeNode {
-    TwoTreeNode *left;
-    TwoTreeNode *right;
-    TwoTreeNode *parent;
+    std::shared_ptr<TwoTreeNode> left;
+    std::shared_ptr<TwoTreeNode> right;
+    std::shared_ptr<TwoTreeNode> parent;
     bool direction;
 
-    TwoTreeNode(TwoTreeNode *parent, int depth, int ind,
-                  TwoTreeNode **leaf_arr)
+    TwoTreeNode(TwoTreeNode *parent, int depth, int ind, TwoTreeNode **leaf_arr)
         : direction(false), parent(parent) {
       // Double check this indexing
       if (depth >= 0) {
@@ -47,6 +46,9 @@ private:
 protected:
   struct TwoTreeReplData : ReplacementData {
     size_t leaf_ind;
+    std::shared_ptr<TwoTreeNode> cold;
+    std::shared_ptr<TwoTreeNode> hot;
+    std::shared_ptr<TwoTreeNode> probation;
 
     TwoTreeReplData(size_t ind);
   };
@@ -65,8 +67,7 @@ private:
       int tree_depth = int(log(assoc));
       TwoTreeNode **leaf_nodes = new TwoTreeNode *[assoc];
       TwoTreeReplData **repl_data_arr = new TwoTreeReplData *[assoc];
-      TwoTreeNode *tree =
-          new TwoTreeNode(nullptr, tree_depth, 0, leaf_nodes);
+      TwoTreeNode *tree = new TwoTreeNode(nullptr, tree_depth, 0, leaf_nodes);
       TwoTreeNode *first_left = tree->left;
       tree->left = first_left->right;
       this->probation = first_left->right;

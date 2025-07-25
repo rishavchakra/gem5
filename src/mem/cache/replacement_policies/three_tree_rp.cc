@@ -1,6 +1,7 @@
 #include "mem/cache/replacement_policies/three_tree_rp.hh"
 
 #include <cmath>
+#include <memory>
 
 #include "params/ThreeTreeRP.hh"
 
@@ -16,9 +17,9 @@ ThreeTree::ThreeTree(const Params &p) : Base(p) {
 
   assoc = p.a;
   obj_count = 0;
-  cold_tree = new std::vector<bool>(assoc, false);
-  prob_tree = new std::vector<bool>(assoc, false);
-  hot_tree = new std::vector<bool>(assoc, false);
+  cold_tree = new TTTree(assoc, false);
+  prob_tree = new TTTree(assoc, false);
+  hot_tree = new TTTree(assoc, false);
 
   cold_repl_arr = new ThreeTreeReplData *[assoc / 4];
   prob_repl_arr = new ThreeTreeReplData *[assoc / 4];
@@ -31,12 +32,9 @@ ThreeTree::ThreeTree(const Params &p) : Base(p) {
 }
 
 ThreeTree::~ThreeTree() {
-  delete cold_tree;
-  delete prob_tree;
-  delete hot_tree;
-  delete cold_repl_arr;
-  delete prob_repl_arr;
-  delete hot_repl_arr;
+  // delete cold_repl_arr;
+  // delete prob_repl_arr;
+  // delete hot_repl_arr;
 }
 
 void ThreeTree::invalidate(
@@ -77,7 +75,7 @@ void ThreeTree::touch(
     next_tree = prob_tree;
     next_tree_depth = prob_depth;
     next_tree_size = assoc / 4;
-    next_repl_arr = cold_repl_arr;
+    cur_repl_arr = cold_repl_arr;
     next_repl_arr = prob_repl_arr;
     should_swap = true;
     chose_cold = true;
@@ -85,10 +83,12 @@ void ThreeTree::touch(
     next_tree = hot_tree;
     next_tree_depth = hot_depth;
     next_tree_size = assoc / 2;
-    next_repl_arr = prob_repl_arr;
+    cur_repl_arr = prob_repl_arr;
     next_repl_arr = hot_repl_arr;
     should_swap = true;
     chose_prob = true;
+  } else {
+    should_swap = false;
   }
 
   size_t touch_ind;
@@ -196,22 +196,56 @@ ThreeTree::getVictim(const ReplacementCandidates &candidates) const {
   return candidates.at(0);
 }
 
+// std::shared_ptr<ReplacementData> ThreeTree::instantiateEntry() {
+//   ThreeTreeReplData *repl = new ThreeTreeReplData(obj_count);
+//   if (obj_count < (assoc / 4)) {
+//     repl->tree_index = obj_count;
+//     repl->tree = cold_tree;
+//     this->cold_repl_arr[obj_count] = repl;
+//   } else if (obj_count < (assoc / 2)) {
+//     repl->tree_index = obj_count - (assoc / 4);
+//     repl->tree = prob_tree;
+//     this->prob_repl_arr[obj_count - 4] = repl;
+//   } else {
+//     repl->tree_index = obj_count - (assoc / 2);
+//     repl->tree = hot_tree;
+//     this->hot_repl_arr[obj_count - 8] = repl;
+//   }
+//   this->obj_count++;
+//   return std::shared_ptr<ReplacementData>(repl);
+// }
+
 std::shared_ptr<ReplacementData> ThreeTree::instantiateEntry() {
-  ThreeTreeReplData *repl = new ThreeTreeReplData(obj_count);
-  if (obj_count < (assoc / 4)) {
-    repl->tree_index = obj_count;
-    repl->tree = cold_tree;
-    this->cold_repl_arr[obj_count] = repl;
-  } else if (obj_count < (assoc / 2)) {
-    repl->tree_index = obj_count - (assoc / 4);
-    repl->tree = prob_tree;
-    this->prob_repl_arr[obj_count - 4] = repl;
-  } else {
-    repl->tree_index = obj_count - (assoc / 2);
-    repl->tree = hot_tree;
-    this->hot_repl_arr[obj_count - 8] = repl;
+  size_t cache_ind = this->obj_count % assoc;
+  if (cache_ind == 0) {
+    // New cache set, make a new set of structures for the next assoc objects
+    this->cold_tree = std::make_shared<TTTree>(assoc / 4, false);
+    this->prob_tree = std::make_shared<TTTree>(assoc / 4, false);
+    this->hot_tree = std::make_shared<TTTree>(assoc / 2, false);
+    this->cold_repl_arr = std::make_shared<std::vector<ThreeTreeReplData *>>();
+    this->prob_repl_arr = std::make_shared<std::vector<ThreeTreeReplData *>>();
+    this->hot_repl_arr = std::make_shared<std::vector<ThreeTreeReplData *>>();
   }
+
+  ThreeTreeReplData *repl = new ThreeTreeReplData(
+      cache_ind, this->cold_tree, this->prob_tree, this->hot_tree);
+
+  if (cache_ind < assoc / 4) {
+    // Cold queue
+    repl->tree_index = cache_ind;
+    this->cold_repl_arr->push_back(repl);
+  } else if (cache_ind < assoc / 2) {
+    // Probation queue
+    repl->tree_index = cache_ind - (assoc / 4);
+    this->prob_repl_arr->push_back(repl);
+  } else {
+    // Hot queue
+    repl->tree_index = obj_count - (assoc / 2);
+    this->hot_repl_arr->push_back(repl);
+  }
+
   this->obj_count++;
+
   return std::shared_ptr<ReplacementData>(repl);
 }
 
