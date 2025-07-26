@@ -42,18 +42,12 @@ class DuelingRP(BaseReplacementPolicy):
     cxx_class = "gem5::replacement_policy::Dueling"
     cxx_header = "mem/cache/replacement_policies/dueling_rp.hh"
 
-    constituency_size = Param.Unsigned(
-        "The size of a region containing one sample"
-    )
+    constituency_size = Param.Unsigned("The size of a region containing one sample")
     team_size = Param.Unsigned(
         "Number of entries in a sampling set that belong to a team"
     )
-    replacement_policy_a = Param.BaseReplacementPolicy(
-        "Sub-replacement policy A"
-    )
-    replacement_policy_b = Param.BaseReplacementPolicy(
-        "Sub-replacement policy B"
-    )
+    replacement_policy_a = Param.BaseReplacementPolicy("Sub-replacement policy A")
+    replacement_policy_b = Param.BaseReplacementPolicy("Sub-replacement policy B")
 
 
 class FIFORP(BaseReplacementPolicy):
@@ -111,9 +105,7 @@ class BRRIPRP(BaseReplacementPolicy):
     hit_priority = Param.Bool(
         False, "Prioritize evicting blocks that havent had a hit recently"
     )
-    btp = Param.Percent(
-        3, "Percentage of blocks to be inserted with long RRPV"
-    )
+    btp = Param.Percent(3, "Percentage of blocks to be inserted with long RRPV")
 
 
 class RRIPRP(BRRIPRP):
@@ -191,20 +183,20 @@ class SIEVERP(BaseReplacementPolicy):
 #     assoc = Param.Int(Parent.assoc, "Number of leaves in each tree")
 
 
-class TwoTreeRP(BaseReplacementPolicy):
-    type = "TwoTreeRP"
-    cxx_class = "gem5::replacement_policy::TwoTree"
-    cxx_header = "mem/cache/replacement_policies/two_tree_rp.hh"
-    assoc = Param.Int(Parent.assoc, "Number of leaves in each tree")
-    cold_repl = Param.Int(
-        Parent.cold_repl, "Cold Queue replacement algorithm choice"
-    )
-    hot_repl = Param.Int(
-        Parent.hot_repl, "Hot Queue replacement algorithm choice"
-    )
-    probation_type = Param.Int(
-        Parent.probation_type, "Probation Queue use choice"
-    )
+# class TwoTreeRP(BaseReplacementPolicy):
+#     type = "TwoTreeRP"
+#     cxx_class = "gem5::replacement_policy::TwoTree"
+#     cxx_header = "mem/cache/replacement_policies/two_tree_rp.hh"
+#     assoc = Param.Int(Parent.assoc, "Number of leaves in each tree")
+#     cold_repl = Param.Int(
+#         Parent.cold_repl, "Cold Queue replacement algorithm choice"
+#     )
+#     hot_repl = Param.Int(
+#         Parent.hot_repl, "Hot Queue replacement algorithm choice"
+#     )
+#     probation_type = Param.Int(
+#         Parent.probation_type, "Probation Queue use choice"
+#     )
 
 
 class ThreeTreeRP(BaseReplacementPolicy):
