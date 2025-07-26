@@ -45,7 +45,7 @@ Source('second_chance_rp.cc')
 Source('ship_rp.cc')
 Source('sieve_rp.cc')
 # Source('two_tree_rp.cc')
-Source('three_tree_rp.cc')
+# Source('three_tree_rp.cc')
 Source('tree_plru_rp.cc')
 Source('weighted_lru_rp.cc')
 
