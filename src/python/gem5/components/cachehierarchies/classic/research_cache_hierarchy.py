@@ -16,7 +16,7 @@ from m5.objects import (
     FIFORP,
     LRURP,
     SecondChanceRP,
-    TwoTreeRP,
+    # TwoTreeRP,
     ThreeTreeRP,
 )
 
@@ -34,8 +34,8 @@ def get_repl(repl_str: str):
             ret = LRURP()
         case "second-chance":
             ret = SecondChanceRP()
-        case "2tree":
-            ret = TwoTreeRP()
+        # case "2tree":
+        #     ret = TwoTreeRP()
         case "3tree":
             ret = ThreeTreeRP()
     return ret
