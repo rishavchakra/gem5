@@ -1,5 +1,5 @@
 from typing import Optional
-from ....utils.overrides import *
+from ....utils.override import *
 
 from ..abstract_cache_hierarchy import AbstractCacheHierarchy
 from .abstract_classic_cache_hierarchy import AbstractClassicCacheHierarchy
