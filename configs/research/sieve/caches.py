@@ -394,33 +394,33 @@ class L3_WeightedLRU(L3Cache):
 """
 
 
-class L1I_3Tree(L1ICache):
-    replacement_policy = ThreeTreeRP()
-
-    def __init__(self, assoc):
-        super().__init__()
-        self.assoc = assoc
-
-
-class L1D_3Tree(L1DCache):
-    replacement_policy = ThreeTreeRP()
-
-    def __init__(self, assoc):
-        super().__init__()
-        self.assoc = assoc
-
-
-class L2_3Tree(L2Cache):
-    replacement_policy = ThreeTreeRP()
-
-    def __init__(self, assoc):
-        super().__init__()
-        self.assoc = assoc
-
-
-class L3_3Tree(L3Cache):
-    replacement_policy = ThreeTreeRP()
-
-    def __init__(self, assoc):
-        super().__init__()
-        self.assoc = assoc
+# class L1I_3Tree(L1ICache):
+#     replacement_policy = ThreeTreeRP()
+#
+#     def __init__(self, assoc):
+#         super().__init__()
+#         self.assoc = assoc
+#
+#
+# class L1D_3Tree(L1DCache):
+#     replacement_policy = ThreeTreeRP()
+#
+#     def __init__(self, assoc):
+#         super().__init__()
+#         self.assoc = assoc
+#
+#
+# class L2_3Tree(L2Cache):
+#     replacement_policy = ThreeTreeRP()
+#
+#     def __init__(self, assoc):
+#         super().__init__()
+#         self.assoc = assoc
+#
+#
+# class L3_3Tree(L3Cache):
+#     replacement_policy = ThreeTreeRP()
+#
+#     def __init__(self, assoc):
+#         super().__init__()
+#         self.assoc = assoc

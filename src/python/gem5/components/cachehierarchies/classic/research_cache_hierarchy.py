@@ -17,7 +17,7 @@ from m5.objects import (
     LRURP,
     SecondChanceRP,
     # TwoTreeRP,
-    ThreeTreeRP,
+    # ThreeTreeRP,
 )
 
 
@@ -36,8 +36,8 @@ def get_repl(repl_str: str):
             ret = SecondChanceRP()
         # case "2tree":
         #     ret = TwoTreeRP()
-        case "3tree":
-            ret = ThreeTreeRP()
+        # case "3tree":
+        #     ret = ThreeTreeRP()
     return ret
 
 

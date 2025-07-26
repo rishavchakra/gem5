@@ -199,8 +199,8 @@ class SIEVERP(BaseReplacementPolicy):
 #     )
 
 
-class ThreeTreeRP(BaseReplacementPolicy):
-    type = "ThreeTreeRP"
-    cxx_class = "gem5::replacement_policy::ThreeTree"
-    cxx_header = "mem/cache/replacement_policies/three_tree_rp.hh"
-    a = Param.Int(Parent.assoc, "Number of leaves in each tree")
+# class ThreeTreeRP(BaseReplacementPolicy):
+#     type = "ThreeTreeRP"
+#     cxx_class = "gem5::replacement_policy::ThreeTree"
+#     cxx_header = "mem/cache/replacement_policies/three_tree_rp.hh"
+#     a = Param.Int(Parent.assoc, "Number of leaves in each tree")
